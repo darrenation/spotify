@@ -41,7 +41,7 @@ hours = duration_ms // (1000 * 60 * 60)
 minutes = (duration_ms % (1000 * 60 * 60)) // (1000 * 60)
 total_time_today = f"{hours} hr {minutes} min"
 
-# 3. Weekly Listening Trend
+# 3. Weekly Listening Trend (Ensure 0 value for no data days)
 weekly = pd.read_sql("""
     WITH date_range AS (
         SELECT generate_series(
@@ -59,7 +59,9 @@ weekly = pd.read_sql("""
     GROUP BY dr.date
     ORDER BY dr.date;
 """, conn)
+# Convert milliseconds to hours
 weekly['hours'] = (weekly['total_duration_ms'] / (1000 * 60 * 60)).round(2)
+
 
 
 # 4. Top Album
