@@ -4,8 +4,11 @@ import pandas as pd
 from datetime import datetime
 import openai
 
-# Set up OpenAI API key
-openai.api_key = "YOUR_OPENAI_API_KEY"
+# Load environment variables from .env file
+load_dotenv()
+
+# Set your OpenAI API key
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # DB config
 DB_HOST = "spotify-etl-db.c5ogo2oke3oq.ap-southeast-1.rds.amazonaws.com"
