@@ -2,15 +2,16 @@ import streamlit as st
 import psycopg2
 import pandas as pd
 from datetime import datetime
-import openai
-from dotenv import load_dotenv
+from openai import OpenAI
 import os
+from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
 
 # Set your OpenAI API key
-openai.api_key = os.getenv("OPENAI_API_KEY")
+openai_api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=openai_api_key)  # Instantiate OpenAI client
 
 # DB config
 DB_HOST = "spotify-etl-db.c5ogo2oke3oq.ap-southeast-1.rds.amazonaws.com"
@@ -90,9 +91,9 @@ def generate_ai_summary(weekly_data):
     Be sure to mention the user's total listening time, their favorite days, and the overall trend for the week. Make it fun and upbeat!
     """
 
-    # Use the ChatCompletion API (new method) to generate the summary
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",  # or "gpt-4" for a more advanced model
+    # Use the new OpenAI client and ChatCompletion API to generate the summary
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",  # Use the most suitable model
         messages=[
             {"role": "system", "content": "You are a friendly assistant."},
             {"role": "user", "content": prompt},
@@ -119,9 +120,7 @@ with col1:
     st.subheader("🕒 Total Time Listened Today")
     st.markdown(
         f"""
-        <div style='font-size: 20px; font-weight: bold;'>
-            {total_time_today}
-        </div>
+        <div style='font-size: 20px; font-weight: bold;'>{total_time_today}</div>
         """,
         unsafe_allow_html=True
     )
@@ -131,11 +130,8 @@ with col2:
     played_time = pd.to_datetime(latest['played_at'][0]).tz_localize('UTC').tz_convert('Asia/Singapore').strftime('%Y-%m-%d %H:%M')
     st.markdown(
         f"""
-        <div style='font-size: 20px; font-weight: bold;'>
-            {latest['track_name'][0]} &nbsp;
-            <span style='color: gray; font-weight: normal; font-size: 16px;'>
-                by <span style='font-weight: 600;'>{latest['artist'][0]}</span> @ {played_time}
-            </span>
+        <div style='font-size: 20px; font-weight: bold;'>{latest['track_name'][0]} &nbsp;
+            <span style='color: gray; font-weight: normal; font-size: 16px;'>by <span style='font-weight: 600;'>{latest['artist'][0]}</span> @ {played_time}</span>
         </div>
         """,
         unsafe_allow_html=True
@@ -145,11 +141,8 @@ with col3:
     st.subheader("💿 Most Played Album")
     st.markdown(
         f"""
-        <div style='font-size: 20px; font-weight: bold;'>
-            {top_album['album'][0]} &nbsp;
-            <span style='color: gray; font-weight: normal; font-size: 16px;'>
-                ({top_album['play_count'][0]} plays)
-            </span>
+        <div style='font-size: 20px; font-weight: bold;'>{top_album['album'][0]} &nbsp;
+            <span style='color: gray; font-weight: normal; font-size: 16px;'>({top_album['play_count'][0]} plays)</span>
         </div>
         """,
         unsafe_allow_html=True
