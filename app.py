@@ -90,14 +90,17 @@ def generate_ai_summary(weekly_data):
     Be sure to mention the user's total listening time, their favorite days, and the overall trend for the week. Make it fun and upbeat!
     """
 
-    response = openai.Completion.create(
-        engine="text-davinci-003",  # Use "gpt-3.5-turbo" for a more cost-efficient option
-        prompt=prompt,
-        max_tokens=150,
-        temperature=0.7
+    # Use the ChatCompletion API (new method) to generate the summary
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",  # or "gpt-4" for a more advanced model
+        messages=[
+            {"role": "system", "content": "You are a friendly assistant."},
+            {"role": "user", "content": prompt},
+        ]
     )
 
-    return response.choices[0].text.strip()
+    # Return the AI-generated summary
+    return response['choices'][0]['message']['content']
 
 # Format the weekly data for AI summary
 weekly_data = "\n".join([f"On {row['date']}, you listened for {row['hours']} hours." for _, row in weekly.iterrows()])
