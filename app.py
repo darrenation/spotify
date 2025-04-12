@@ -3,6 +3,8 @@ import psycopg2
 import pandas as pd
 from datetime import datetime
 import openai
+from dotenv import load_dotenv
+import os
 
 # Load environment variables from .env file
 load_dotenv()
