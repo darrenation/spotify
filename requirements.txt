@@ -1,5 +1,5 @@
 streamlit
 psycopg2-binary
 pandas
-openai
+openai==1.72.0
 python-dotenv
