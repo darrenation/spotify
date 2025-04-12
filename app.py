@@ -2,16 +2,7 @@ import streamlit as st
 import psycopg2
 import pandas as pd
 from datetime import datetime
-from openai import OpenAI
-import os
-from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
-
-# Set your OpenAI API key
-openai_api_key = st.secrets["general"]["OPENAI_API_KEY"]
-client = OpenAI(api_key=openai_api_key)  # Instantiate OpenAI client
 
 # DB config
 DB_HOST = "spotify-etl-db.c5ogo2oke3oq.ap-southeast-1.rds.amazonaws.com"
@@ -52,15 +43,24 @@ total_time_today = f"{hours} hr {minutes} min"
 
 # 3. Weekly Listening Trend
 weekly = pd.read_sql("""
-    SELECT
-    TO_CHAR((played_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Singapore')::date, 'YYYY-MM-DD') AS date,
-    SUM(duration_ms) AS total_duration_ms
-    FROM spotify_history
-    WHERE (played_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Singapore')::date >= CURRENT_DATE - INTERVAL '6 days'
-    GROUP BY date
-    ORDER BY date;
+    WITH date_range AS (
+        SELECT generate_series(
+            CURRENT_DATE - INTERVAL '6 days', 
+            CURRENT_DATE, 
+            '1 day'::interval
+        )::date AS date
+    )
+    SELECT 
+        dr.date,
+        COALESCE(SUM(sh.duration_ms), 0) AS total_duration_ms
+    FROM date_range dr
+    LEFT JOIN spotify_history sh
+        ON (sh.played_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Singapore')::date = dr.date
+    GROUP BY dr.date
+    ORDER BY dr.date;
 """, conn)
 weekly['hours'] = (weekly['total_duration_ms'] / (1000 * 60 * 60)).round(2)
+
 
 # 4. Top Album
 top_album = pd.read_sql("""
@@ -81,35 +81,6 @@ latest = pd.read_sql("""
 
 conn.close()
 
-# --- AI Summary Function ---
-# Corrected method to access the response
-def generate_ai_summary(weekly_data):
-    prompt = f"""
-    You are a friendly assistant summarizing a user's Spotify listening trends. Please summarize the following weekly listening data in a cheerful and engaging tone:
-
-    {weekly_data}
-
-    Be sure to mention the user's total listening time, their favorite days, and the overall trend for the week. Make it fun and upbeat!
-    """
-
-    # Use the new OpenAI client and ChatCompletion API to generate the summary
-    response = client.chat.completions.create(
-        model="gpt-3.5-turbo",  # Use the most suitable model
-        messages=[{"role": "system", "content": "You are a friendly assistant."},
-                  {"role": "user", "content": prompt}]
-    )
-
-    # Correct response format handling
-    summary = response['choices'][0]['message']['content']
-    return summary
-
-
-
-# Format the weekly data for AI summary
-weekly_data = "\n".join([f"On {row['date']}, you listened for {row['hours']} hours." for _, row in weekly.iterrows()])
-
-# Generate AI Summary based on the weekly listening data
-summary = generate_ai_summary(weekly_data)
 
 # --- Streamlit UI ---
 st.set_page_config(page_title="Spotify Listening Insights", layout="wide")
@@ -173,10 +144,6 @@ with col1:
 with col2:
     st.subheader("📈 Weekly Listening Trend")
     st.line_chart(weekly.set_index('date')['hours'])
-
-# --- AI Summary ---
-st.subheader("🤖 AI Summary of Your Weekly Listening Trends")
-st.write(summary)
 
 # --- Footer with Playlist Link ---
 st.markdown(
