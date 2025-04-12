@@ -82,6 +82,7 @@ latest = pd.read_sql("""
 conn.close()
 
 # --- AI Summary Function ---
+# Corrected method to access the response
 def generate_ai_summary(weekly_data):
     prompt = f"""
     You are a friendly assistant summarizing a user's Spotify listening trends. Please summarize the following weekly listening data in a cheerful and engaging tone:
@@ -94,14 +95,17 @@ def generate_ai_summary(weekly_data):
     # Use the new OpenAI client and ChatCompletion API to generate the summary
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",  # Use the most suitable model
-        messages=[
+        messages=[ 
             {"role": "system", "content": "You are a friendly assistant."},
             {"role": "user", "content": prompt},
         ]
     )
 
-    # Return the AI-generated summary
-    return response['choices'][0]['message']['content']
+    # Access the response correctly (use response['choices'][0]['message']['content'] or the newer structure)
+    summary = response['choices'][0].get('message', {}).get('content', '')
+
+    return summary
+
 
 # Format the weekly data for AI summary
 weekly_data = "\n".join([f"On {row['date']}, you listened for {row['hours']} hours." for _, row in weekly.iterrows()])
