@@ -88,13 +88,13 @@ conn.close()
 
 # --- Streamlit UI ---
 st.set_page_config(page_title="Spotify Listening Insights", layout="wide")
-st.title("🎵 hi")
+st.title("🎵 Spotify Listening Insights")
 
 # --- Top Metrics ---
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.subheader("🕒 gigi")
+    st.subheader("🕒 Total Time Listened Today")
     st.markdown(
         f"""
         <div style='font-size: 20px; font-weight: bold;'>{total_time_today}</div>
