@@ -34,19 +34,19 @@ minutes_today = pd.read_sql("""
     SELECT
     SUM(duration_ms) AS total_duration_ms
     FROM spotify_history
-    WHERE (played_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Singapore')::date = CURRENT_DATE;
+    WHERE (played_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Singapore')::date = (NOW() AT TIME ZONE 'Asia/Singapore')::date;
 """, conn)
 duration_ms = int(minutes_today['total_duration_ms'][0] or 0)
 hours = duration_ms // (1000 * 60 * 60)
 minutes = (duration_ms % (1000 * 60 * 60)) // (1000 * 60)
 total_time_today = f"{hours} hr {minutes} min"
 
-# 3. Weekly Listening Trend (Ensure 0 value for no data days)
+# 3. Weekly Listening Trend (Ensure 0 value for no data days and include current day)
 weekly = pd.read_sql("""
     WITH date_range AS (
         SELECT generate_series(
-            CURRENT_DATE - INTERVAL '6 days', 
-            CURRENT_DATE, 
+            (NOW() AT TIME ZONE 'Asia/Singapore')::date - INTERVAL '6 days', 
+            (NOW() AT TIME ZONE 'Asia/Singapore')::date,  -- Ensure current date (Singapore time) is included
             '1 day'::interval
         )::date AS date
     )
@@ -59,8 +59,10 @@ weekly = pd.read_sql("""
     GROUP BY dr.date
     ORDER BY dr.date;
 """, conn)
+
 # Convert milliseconds to hours
 weekly['hours'] = (weekly['total_duration_ms'] / (1000 * 60 * 60)).round(2)
+
 
 
 
@@ -86,13 +88,13 @@ conn.close()
 
 # --- Streamlit UI ---
 st.set_page_config(page_title="Spotify Listening Insights", layout="wide")
-st.title("🎵 Spotify Listening Insights")
+st.title("🎵 hi")
 
 # --- Top Metrics ---
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.subheader("🕒 Total Time Listened Today")
+    st.subheader("🕒 gigi")
     st.markdown(
         f"""
         <div style='font-size: 20px; font-weight: bold;'>{total_time_today}</div>
