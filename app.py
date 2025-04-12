@@ -102,7 +102,7 @@ def generate_ai_summary(weekly_data):
     )
 
     # Access the response correctly (use response['choices'][0]['message']['content'] or the newer structure)
-    summary = response['choices'][0].get('message', {}).get('content', '')
+    summary = response['choices'][0].get('message', {}).get('content', 'No summary generated.')
 
     return summary
 
