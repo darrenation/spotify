@@ -1,5 +1,0 @@
-streamlit
-psycopg2-binary
-pandas
-openai==1.72.0
-python-dotenv
