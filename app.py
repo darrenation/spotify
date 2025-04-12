@@ -2,6 +2,10 @@ import streamlit as st
 import psycopg2
 import pandas as pd
 from datetime import datetime
+import openai
+
+# Set up OpenAI API key
+openai.api_key = "YOUR_OPENAI_API_KEY"
 
 # DB config
 DB_HOST = "spotify-etl-db.c5ogo2oke3oq.ap-southeast-1.rds.amazonaws.com"
@@ -71,8 +75,33 @@ latest = pd.read_sql("""
 
 conn.close()
 
+# --- AI Summary Function ---
+def generate_ai_summary(weekly_data):
+    prompt = f"""
+    You are a friendly assistant summarizing a user's Spotify listening trends. Please summarize the following weekly listening data in a cheerful and engaging tone:
 
-st.set_page_config(page_title="Spotify Dashboard", layout="wide")
+    {weekly_data}
+
+    Be sure to mention the user's total listening time, their favorite days, and the overall trend for the week. Make it fun and upbeat!
+    """
+
+    response = openai.Completion.create(
+        engine="text-davinci-003",  # Use "gpt-3.5-turbo" for a more cost-efficient option
+        prompt=prompt,
+        max_tokens=150,
+        temperature=0.7
+    )
+
+    return response.choices[0].text.strip()
+
+# Format the weekly data for AI summary
+weekly_data = "\n".join([f"On {row['date']}, you listened for {row['hours']} hours." for _, row in weekly.iterrows()])
+
+# Generate AI Summary based on the weekly listening data
+summary = generate_ai_summary(weekly_data)
+
+# --- Streamlit UI ---
+st.set_page_config(page_title="Spotify Listening Insights", layout="wide")
 st.title("🎵 Spotify Listening Insights")
 
 # --- Top Metrics ---
@@ -91,12 +120,13 @@ with col1:
 
 with col2:
     st.subheader("🎧 Latest Track")
+    played_time = pd.to_datetime(latest['played_at'][0]).tz_localize('UTC').tz_convert('Asia/Singapore').strftime('%Y-%m-%d %H:%M')
     st.markdown(
         f"""
         <div style='font-size: 20px; font-weight: bold;'>
             {latest['track_name'][0]} &nbsp;
             <span style='color: gray; font-weight: normal; font-size: 16px;'>
-                by <span style='font-weight: 600;'>{latest['artist'][0]}</span>
+                by <span style='font-weight: 600;'>{latest['artist'][0]}</span> @ {played_time}
             </span>
         </div>
         """,
@@ -117,8 +147,7 @@ with col3:
         unsafe_allow_html=True
     )
 
-
-
+# --- Artist and Weekly Listening Trend ---
 col1, col2 = st.columns(2)
 
 with col1:
@@ -130,6 +159,7 @@ with col1:
     for i, row in top_artists.iterrows():
         emoji = medals[i] if i < len(medals) else f"{i+1}."
         ranked_artists.append((emoji, row["artist"], row["play_count"]))
+    
     st.subheader("🎤 Top 5 Artists (All Time)")
     for medal, artist, count in ranked_artists:
         st.markdown(
@@ -141,10 +171,16 @@ with col2:
     st.subheader("📈 Weekly Listening Trend")
     st.line_chart(weekly.set_index('date')['hours'])
 
+# --- AI Summary ---
+st.subheader("🤖 AI Summary of Your Weekly Listening Trends")
+st.write(summary)
+
+# --- Footer with Playlist Link ---
 st.markdown(
     """
-    <div style='text-align: right; font-size: 2.85rem; margin-top: 30px; color: gray;'>
-        🎧 <a href='https://open.spotify.com/user/darrenation?si=a094dca8596b4ad2' target='_blank' style='color: #1DB954; font-family: "Circular", sans-serif;'>Visit my Spotify</a>
+    <div style='text-align: right; font-size: 0.85rem; margin-top: 30px; color: gray;'>
+        <img src='https://upload.wikimedia.org/wikipedia/commons/2/26/Spotify_logo_with_text.svg' style='height: 24px; vertical-align: middle; margin-right: 8px;'/>
+        <a href='https://open.spotify.com/user/darrenation?si=a094dca8596b4ad2' target='_blank' style='color: #1DB954;'>Visit my Spotify</a>
     </div>
     """,
     unsafe_allow_html=True
