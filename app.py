@@ -151,7 +151,6 @@ with col2:
 st.markdown(
     """
     <div style='text-align: right; font-size: 0.85rem; margin-top: 30px; color: gray;'>
-        <img src='https://upload.wikimedia.org/wikipedia/commons/2/26/Spotify_logo_with_text.svg' style='height: 24px; vertical-align: middle; margin-right: 8px;'/>
         <a href='https://open.spotify.com/user/darrenation?si=a094dca8596b4ad2' target='_blank' style='color: #1DB954;'>Visit my Spotify</a>
     </div>
     """,
