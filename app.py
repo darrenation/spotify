@@ -95,16 +95,14 @@ def generate_ai_summary(weekly_data):
     # Use the new OpenAI client and ChatCompletion API to generate the summary
     response = client.chat.completions.create(
         model="gpt-3.5-turbo",  # Use the most suitable model
-        messages=[ 
-            {"role": "system", "content": "You are a friendly assistant."},
-            {"role": "user", "content": prompt},
-        ]
+        messages=[{"role": "system", "content": "You are a friendly assistant."},
+                  {"role": "user", "content": prompt}]
     )
 
-    # Access the response correctly (use response['choices'][0]['message']['content'] or the newer structure)
-    summary = response['choices'][0].get('message', {}).get('content', 'No summary generated.')
-
+    # Correct response format handling
+    summary = response['choices'][0]['message']['content']
     return summary
+
 
 
 # Format the weekly data for AI summary
