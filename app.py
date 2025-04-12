@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Set your OpenAI API key
-openai_api_key = os.getenv("OPENAI_API_KEY")
+openai_api_key = st.secrets["general"]["OPENAI_API_KEY"]
 client = OpenAI(api_key=openai_api_key)  # Instantiate OpenAI client
 
 # DB config
